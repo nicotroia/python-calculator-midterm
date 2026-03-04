@@ -1,5 +1,6 @@
 """Input validation and expression parsing for the calculator REPL."""
 import re
+from app.exceptions import ValidationError
 
 # Ordered so multi-char operators (**  //) are matched before single-char ones
 OPERATOR_SYMBOLS = {
@@ -29,7 +30,7 @@ def parse_expression(text: str):
   """
   match = _EXPR_RE.match(text)
   if not match:
-    raise ValueError(
+    raise ValidationError(
       f"Cannot parse '{text}'. Expected format: <number> <operator> <number>\n"
       f"  Supported operators: {' '.join(OPERATOR_SYMBOLS)}"
     )
@@ -39,12 +40,12 @@ def parse_expression(text: str):
   try:
     a = float(raw_a)
   except ValueError:
-    raise ValueError(f"Invalid number: '{raw_a}'")
+    raise ValidationError(f"Invalid number: '{raw_a}'")
 
   try:
     b = float(raw_b)
   except ValueError:
-    raise ValueError(f"Invalid number: '{raw_b}'")
+    raise ValidationError(f"Invalid number: '{raw_b}'")
 
   operation_name = OPERATOR_SYMBOLS[symbol]
   return a, operation_name, b

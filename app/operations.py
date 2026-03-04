@@ -1,5 +1,6 @@
 """Arithmetic operation classes using the Abstract Base Class pattern"""
 from abc import ABC, abstractmethod
+from app.exceptions import OperationError
 class Operation(ABC):
   """Abstract base class for all calculator operations."""
 
@@ -18,7 +19,7 @@ class Multiply(Operation):
 class Divide(Operation):
   def execute(self, a, b):
     if b == 0:
-      raise ValueError("Cannot divide by zero")
+      raise OperationError("Cannot divide by zero")
     return a / b
 class Power(Operation):
   def execute(self, a, b):
@@ -26,23 +27,23 @@ class Power(Operation):
 class Root(Operation):
   def execute(self, a, b):
     if b == 0:
-      raise ValueError("Root degree cannot be zero")
+      raise OperationError("Root degree cannot be zero")
     return a ** (1 / b)
 class Modulus(Operation):
   def execute(self, a, b):
     if b == 0:
-      raise ValueError("Cannot modulo by zero")
+      raise OperationError("Cannot modulo by zero")
     return a % b
 class IntegerDivision(Operation):
   def execute(self, a, b):
     if b == 0:
-      raise ValueError("Cannot divide by zero")
+      raise OperationError("Cannot divide by zero")
     return a // b
 class Percentage(Operation):
   """Computes (a / b) * 100."""
   def execute(self, a, b):
     if b == 0:
-      raise ValueError("Cannot divide by zero")
+      raise OperationError("Cannot divide by zero")
     return (a / b) * 100
 class AbsoluteDifference(Operation):
   def execute(self, a, b):
@@ -66,14 +67,14 @@ class OperationFactory:
 
   @classmethod
   def create(cls, name: str) -> Operation:
-    """Return an Operation instance for the given name.
+    """Return an Operation instance for the given name
 
-    Raises ValueError for unknown operation names.
+    Raises ValueError for unknown operation names
     """
     op_class = cls._operations.get(name.lower())
     if op_class is None:
-      raise ValueError(f"Unknown operation: '{name}'. "
-                       f"Valid options: {sorted(cls._operations)}")
+      raise OperationError(f"Unknown operation: '{name}'. "
+                           f"Valid options: {sorted(cls._operations)}")
     return op_class()
 
   @classmethod

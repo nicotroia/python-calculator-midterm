@@ -1,5 +1,6 @@
 """Tests for OperationFactory."""
 import pytest
+from app.exceptions import OperationError
 from app.operations import OperationFactory, Add, Divide
 
 def test_create_returns_correct_type():
@@ -11,7 +12,7 @@ def test_create_case_insensitive():
   assert op.execute(1, 2) == 3
 
 def test_create_unknown_raises():
-  with pytest.raises(ValueError, match="Unknown operation"):
+  with pytest.raises(OperationError, match="Unknown operation"):
     OperationFactory.create("square_root")
 
 def test_execute_add():
@@ -45,5 +46,5 @@ def test_execute_absolute_difference():
   assert OperationFactory.execute("absolute_difference", 3, 10) == 7
 
 def test_execute_divide_by_zero_propagates():
-  with pytest.raises(ValueError, match="Cannot divide by zero"):
+  with pytest.raises(OperationError, match="Cannot divide by zero"):
     OperationFactory.execute("divide", 5, 0)

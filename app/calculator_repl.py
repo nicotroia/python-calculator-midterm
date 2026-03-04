@@ -1,4 +1,5 @@
 """Interactive REPL for the calculator."""
+from app.exceptions import CalculatorError
 from app.input_validators import parse_expression, OPERATOR_SYMBOLS
 from app.operations import OperationFactory
 
@@ -48,5 +49,5 @@ def run():
       result = OperationFactory.execute(op_name, a, b)
       # Show as int when result is a whole number
       print(result if result != int(result) else int(result))
-    except ValueError as exc:
+    except CalculatorError as exc:
       print(f"Error: {exc}")

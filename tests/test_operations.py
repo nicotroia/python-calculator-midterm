@@ -1,9 +1,10 @@
 """Tests for Operation subclasses"""
 import pytest
+from app.exceptions import OperationError
 from app.operations import (
-    Operation,
-    Add, Subtract, Multiply, Divide,
-    Power, Root, Modulus, IntegerDivision, Percentage, AbsoluteDifference,
+  Operation,
+  Add, Subtract, Multiply, Divide,
+  Power, Root, Modulus, IntegerDivision, Percentage, AbsoluteDifference,
 )
 
 def test_operation_is_abstract():
@@ -37,7 +38,7 @@ def test_divide():
 
 def test_divide_by_zero():
   op = Divide()
-  with pytest.raises(ValueError, match="Cannot divide by zero"):
+  with pytest.raises(OperationError, match="Cannot divide by zero"):
     op.execute(5, 0)
 
 def test_power():
@@ -53,7 +54,7 @@ def test_root():
 
 def test_root_zero_degree():
   op = Root()
-  with pytest.raises(ValueError, match="Root degree cannot be zero"):
+  with pytest.raises(OperationError, match="Root degree cannot be zero"):
     op.execute(9, 0)
 
 def test_modulus():
@@ -64,7 +65,7 @@ def test_modulus():
 
 def test_modulus_by_zero():
   op = Modulus()
-  with pytest.raises(ValueError, match="Cannot modulo by zero"):
+  with pytest.raises(OperationError, match="Cannot modulo by zero"):
     op.execute(5, 0)
 
 def test_integer_division():
@@ -75,7 +76,7 @@ def test_integer_division():
 
 def test_integer_division_by_zero():
   op = IntegerDivision()
-  with pytest.raises(ValueError, match="Cannot divide by zero"):
+  with pytest.raises(OperationError, match="Cannot divide by zero"):
     op.execute(5, 0)
 
 def test_percentage():
@@ -86,7 +87,7 @@ def test_percentage():
 
 def test_percentage_by_zero():
   op = Percentage()
-  with pytest.raises(ValueError, match="Cannot divide by zero"):
+  with pytest.raises(OperationError, match="Cannot divide by zero"):
     op.execute(5, 0)
 
 def test_absolute_difference():

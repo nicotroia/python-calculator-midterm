@@ -1,5 +1,6 @@
 """Tests for input_validators."""
 import pytest
+from app.exceptions import ValidationError
 from app.input_validators import parse_expression
 
 # ── valid expressions ────────────────────
@@ -31,15 +32,15 @@ def test_parse_valid(expr, expected):
   "1 @ 2",
 ])
 def test_parse_invalid(expr):
-  with pytest.raises(ValueError):
+  with pytest.raises(ValidationError):
     parse_expression(expr)
 
 def test_parse_invalid_float_a():
   # Regex matches but float() conversion fails for a
-  with pytest.raises(ValueError, match="Invalid number"):
+  with pytest.raises(ValidationError, match="Invalid number"):
     parse_expression("1.2.3 + 4")
 
 def test_parse_invalid_float_b():
   # Regex matches but float() conversion fails for b
-  with pytest.raises(ValueError, match="Invalid number"):
+  with pytest.raises(ValidationError, match="Invalid number"):
     parse_expression("4 + 1.2.3")
