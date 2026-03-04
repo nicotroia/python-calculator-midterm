@@ -47,3 +47,36 @@ class Percentage(Operation):
 class AbsoluteDifference(Operation):
   def execute(self, a, b):
     return abs(a - b)
+
+class OperationFactory:
+  """Creates Operation instances by name and executes them on two numbers"""
+
+  _operations = {
+    "add": Add,
+    "subtract": Subtract,
+    "multiply": Multiply,
+    "divide": Divide,
+    "power": Power,
+    "root": Root,
+    "modulus": Modulus,
+    "integer_division": IntegerDivision,
+    "percentage": Percentage,
+    "absolute_difference": AbsoluteDifference,
+  }
+
+  @classmethod
+  def create(cls, name: str) -> Operation:
+    """Return an Operation instance for the given name.
+
+    Raises ValueError for unknown operation names.
+    """
+    op_class = cls._operations.get(name.lower())
+    if op_class is None:
+      raise ValueError(f"Unknown operation: '{name}'. "
+                       f"Valid options: {sorted(cls._operations)}")
+    return op_class()
+
+  @classmethod
+  def execute(cls, name: str, a, b):
+    """Create the operation and immediately execute it on a and b."""
+    return cls.create(name).execute(a, b)

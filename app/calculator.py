@@ -1,16 +1,9 @@
-"""Basic calculator with four operations"""
+"""Calculator class"""
+from app.operations import OperationFactory
 
-def add(a, b):
-  return a + b
+class Calculator:
+  """Stateless calculator that executes operations by name via OperationFactory"""
 
-def subtract(a, b):
-  return a - b
-
-def multiply(a, b):
-  return a * b
-
-def divide(a, b):
-  if b == 0:
-    raise ValueError("Cannot divide by zero")
-  return a / b
-
+  def calculate(self, operation: str, a, b):
+    """Execute a named operation on two numbers and return the result"""
+    return OperationFactory.execute(operation, a, b)
