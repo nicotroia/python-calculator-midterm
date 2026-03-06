@@ -2,7 +2,7 @@
 from abc import ABC, abstractmethod
 from app.exceptions import OperationError
 class Operation(ABC):
-  """Abstract base class for all calculator operations."""
+  """Abstract base class for all calculator operations"""
 
   @abstractmethod
   def execute(self, a, b):
@@ -23,12 +23,14 @@ class Divide(Operation):
     return a / b
 class Power(Operation):
   def execute(self, a, b):
-    return a ** b
+    # Cast to float so fractional exponents work with Decimal inputs
+    return float(a) ** float(b)
 class Root(Operation):
   def execute(self, a, b):
     if b == 0:
       raise OperationError("Root degree cannot be zero")
-    return a ** (1 / b)
+    # Cast to float so fractional exponents work with Decimal inputs
+    return float(a) ** (1.0 / float(b))
 class Modulus(Operation):
   def execute(self, a, b):
     if b == 0:
@@ -79,5 +81,5 @@ class OperationFactory:
 
   @classmethod
   def execute(cls, name: str, a, b):
-    """Create the operation and immediately execute it on a and b."""
+    """Create the operation and immediately execute it on a and b"""
     return cls.create(name).execute(a, b)

@@ -1,6 +1,39 @@
-"""Input validation and expression parsing for the calculator REPL."""
+"""Input validation and expression parsing for the calculator REPL"""
 import re
+from dataclasses import dataclass
+from decimal import Decimal, InvalidOperation
+from typing import Any
+
+from app.calculator_config import CalculatorConfig
 from app.exceptions import ValidationError
+@dataclass
+class InputValidator:
+  """Validates and sanitizes calculator inputs"""
+
+  @staticmethod
+  def validate_number(value: Any, config: CalculatorConfig) -> Decimal:
+    """Validate and convert input to Decimal
+
+    Args:
+      value: Input value to validate (str, int, float, or Decimal)
+
+    Returns:
+      Decimal: Validated and normalized number
+
+    Raises:
+      ValidationError: If the value is non-numeric or exceeds the maximum
+    """
+    try:
+      if isinstance(value, str):
+        value = value.strip()
+      number = Decimal(str(value))
+      if abs(number) > config.max_input_value:
+        raise ValidationError(
+          f"Value exceeds maximum allowed: {config.max_input_value}"
+        )
+      return number.normalize()
+    except InvalidOperation as exc:
+      raise ValidationError(f"Invalid number format: {value}") from exc
 
 # Ordered so multi-char operators (**  //) are matched before single-char ones
 OPERATOR_SYMBOLS = {
@@ -19,15 +52,72 @@ _EXPR_RE = re.compile(
   r'^\s*(-?[\d.]+)\s*(\*\*|//|[+\-*/%^])\s*(-?[\d.]+)\s*$'
 )
 
-def parse_expression(text: str):
-  """Parse an expression string like '1+2' or '8 * -3'.
+# Maps REPL word commands → OperationFactory names
+# Short aliases are included so users don't have to type the full name
+WORD_COMMANDS = {
+  "add":          "add",
+  "subtract":     "subtract",
+  "multiply":     "multiply",
+  "divide":       "divide",
+  "power":        "power",
+  "root":         "root",
+  "modulus":      "modulus",
+  "mod":          "modulus",
+  "int_divide":   "integer_division",
+  "percent":      "percentage",
+  "abs_diff":     "absolute_difference",
+}
+
+_DEFAULT_CONFIG = CalculatorConfig()
+
+_WORD_CMD_RE = re.compile(
+  r'^\s*(\w+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s*$'
+)
+
+def parse_word_command(text: str, config: CalculatorConfig = None):
+  """Parse a word-style command like 'add 5 3' or 'root 27 3'.
 
   Returns:
-    (a: float, operation_name: str, b: float)
+    (a: Decimal, operation_name: str, b: Decimal)
 
   Raises:
-    ValueError if the expression cannot be parsed or numbers are invalid.
+    ValidationError: If the format is wrong or numbers are invalid
   """
+  if config is None:
+    config = _DEFAULT_CONFIG
+
+  match = _WORD_CMD_RE.match(text)
+  if not match:
+    raise ValidationError(
+      f"Cannot parse '{text}' as a command "
+      f"Expected: <operation> <number> <number>"
+    )
+
+  word, raw_a, raw_b = match.groups()
+  op_name = WORD_COMMANDS.get(word.lower())
+  if op_name is None:
+    raise ValidationError(
+      f"Unknown operation '{word}'. "
+      f"Valid operations: {sorted(WORD_COMMANDS)}"
+    )
+
+  a = InputValidator.validate_number(raw_a, config)
+  b = InputValidator.validate_number(raw_b, config)
+  return a, op_name, b
+
+
+def parse_expression(text: str, config: CalculatorConfig = None):
+  """Parse an infix expression string like '1+2' or '8 * -3'.
+
+  Returns:
+    (a: Decimal, operation_name: str, b: Decimal)
+
+  Raises:
+    ValidationError: If the expression cannot be parsed or numbers are invalid.
+  """
+  if config is None:
+    config = _DEFAULT_CONFIG
+
   match = _EXPR_RE.match(text)
   if not match:
     raise ValidationError(
@@ -36,16 +126,6 @@ def parse_expression(text: str):
     )
 
   raw_a, symbol, raw_b = match.groups()
-
-  try:
-    a = float(raw_a)
-  except ValueError:
-    raise ValidationError(f"Invalid number: '{raw_a}'")
-
-  try:
-    b = float(raw_b)
-  except ValueError:
-    raise ValidationError(f"Invalid number: '{raw_b}'")
-
-  operation_name = OPERATOR_SYMBOLS[symbol]
-  return a, operation_name, b
+  a = InputValidator.validate_number(raw_a, config)
+  b = InputValidator.validate_number(raw_b, config)
+  return a, OPERATOR_SYMBOLS[symbol], b

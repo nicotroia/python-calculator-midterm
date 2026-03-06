@@ -8,7 +8,7 @@ from app.operations import (
 )
 
 def test_operation_is_abstract():
-  """Operation cannot be instantiated directly."""
+  """Operation cannot be instantiated directly"""
   with pytest.raises(TypeError):
     Operation()
 

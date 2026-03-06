@@ -1,4 +1,4 @@
-"""Tests for the Calculator class."""
+"""Tests for the Calculator class"""
 import pytest
 from app.exceptions import OperationError
 from app.calculator import Calculator
@@ -23,7 +23,6 @@ def test_divide(calc):
 def test_divide_by_zero(calc):
   with pytest.raises(OperationError, match="Cannot divide by zero"):
     calc.calculate("divide", 5, 0)
-
 
 def test_unknown_operation(calc):
   with pytest.raises(OperationError, match="Unknown operation"):
