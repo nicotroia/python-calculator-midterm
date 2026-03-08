@@ -1,10 +1,12 @@
 """Interactive REPL for the calculator."""
+import readline  # enables up/down arrow history in input()
 from app.calculator_config import CalculatorConfig
 from app.calculator_logs import CalculatorLogger
 from app.calculator_memento import HistoryManager
 from app.exceptions import CalculatorError, ValidationError
 from app.input_validators import (
-  parse_expression, parse_word_command, OPERATOR_SYMBOLS, WORD_COMMANDS,
+  parse_expression, parse_word_command, parse_chain_expression, is_chain_expression,
+  OPERATOR_SYMBOLS, WORD_COMMANDS,
 )
 from app.observer import CalculationEvent, Observable
 from app.operations import OperationFactory
@@ -41,6 +43,7 @@ class ReplLoop(Observable):
   def __init__(self, config: CalculatorConfig):
     super().__init__()
     self._config = config
+    self._last_result = None
 
   def _evaluate(self, raw: str):
     """Try word-command first, fall back to infix expression"""
@@ -90,8 +93,12 @@ class ReplLoop(Observable):
         continue
 
       try:
-        a, op_name, b = self._evaluate(raw)
+        if is_chain_expression(raw):
+          a, op_name, b = parse_chain_expression(raw, self._last_result, self._config)
+        else:
+          a, op_name, b = self._evaluate(raw)
         result = OperationFactory.execute(op_name, a, b)
+        self._last_result = result
         self.notify_observers(CalculationEvent(op_name, a, b, result))
         print(result if result != int(result) else int(result))
       except CalculatorError as exc:

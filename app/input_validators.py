@@ -36,6 +36,7 @@ class InputValidator:
       raise ValidationError(f"Invalid number format: {value}") from exc
 
 # Ordered so multi-char operators (**  //) are matched before single-char ones
+# Keep this order: multi-char before single-char so regex alternation works
 OPERATOR_SYMBOLS = {
   "**": "power",
   "//": "integer_division",
@@ -47,9 +48,14 @@ OPERATOR_SYMBOLS = {
   "^": "power", # Alias for ** power
 }
 
-# Matches optional-negative number  OP  optional-negative number
+# Matches optional-negative number
 _EXPR_RE = re.compile(
   r'^\s*(-?[\d.]+)\s*(\*\*|//|[+\-*/%^])\s*(-?[\d.]+)\s*$'
+)
+
+# Matches a chain expression when there is no leading operand
+_CHAIN_RE = re.compile(
+  r'^\s*(\*\*|//|[+\-*/%^])\s*(-?[\d.]+)\s*$'
 )
 
 # Maps REPL word commands → OperationFactory names
@@ -105,6 +111,36 @@ def parse_word_command(text: str, config: CalculatorConfig = None):
   b = InputValidator.validate_number(raw_b, config)
   return a, op_name, b
 
+def parse_chain_expression(text: str, last_result, config: CalculatorConfig = None):
+  """Parse a chain expression like '* 2', using last_result as the first operand.
+
+  Returns:
+    (a: Decimal, operation_name: str, b: Decimal)
+
+  Raises:
+    ValidationError: If the format is wrong, numbers are invalid, or last_result is None.
+  """
+  if config is None:
+    config = _DEFAULT_CONFIG
+
+  if last_result is None:
+    raise ValidationError("No previous result to chain from. Perform a calculation first.")
+
+  match = _CHAIN_RE.match(text)
+  if not match:
+    raise ValidationError(
+      f"Cannot parse '{text}' as a chain expression. "
+      f"Expected: <operator> <number>  e.g. '* 2'"
+    )
+
+  symbol, raw_b = match.groups()
+  a = InputValidator.validate_number(str(last_result), config)
+  b = InputValidator.validate_number(raw_b, config)
+  return a, OPERATOR_SYMBOLS[symbol], b
+
+def is_chain_expression(text: str) -> bool:
+  """Return True if the text looks like a chain expression (operator + number only)."""
+  return bool(_CHAIN_RE.match(text))
 
 def parse_expression(text: str, config: CalculatorConfig = None):
   """Parse an infix expression string like '1+2' or '8 * -3'.

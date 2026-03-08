@@ -141,7 +141,6 @@ def test_clear_empties_history(monkeypatch, capsys):
   assert "cleared" in out
   assert "No history" in out
 
-
 # ── undo / redo
 
 def test_undo_command_in_commands():
@@ -167,3 +166,29 @@ def test_redo_after_undo(monkeypatch, capsys):
   out = _run_with(["add 1 2", "undo", "redo", "history", "exit"], monkeypatch, capsys)
   assert "Redone" in out
   assert "add" in out
+
+# ── chain expressions (input reuses previous result)
+
+def test_chain_no_previous_result_errors(monkeypatch, capsys):
+  out = _run_with(["* 2", "exit"], monkeypatch, capsys)
+  assert "Error" in out
+
+def test_chain_uses_previous_result(monkeypatch, capsys):
+  # 3 + 4 = 7, then * 2 → 7 * 2 = 14
+  out = _run_with(["3+4", "* 2", "exit"], monkeypatch, capsys)
+  assert "14" in out
+
+def test_chain_multiple_steps(monkeypatch, capsys):
+  # 10 - 3 = 7, then + 3 = 10, then * 2 = 20
+  out = _run_with(["10-3", "+ 3", "* 2", "exit"], monkeypatch, capsys)
+  assert "20" in out
+
+def test_chain_after_clear_errors(monkeypatch, capsys):
+  # After clear the last_result is still valid (clear only clears history, not last result)
+  # so chain after a fresh REPL start should error
+  out = _run_with(["/ 2", "exit"], monkeypatch, capsys)
+  assert "Error" in out
+
+def test_chain_updates_history(monkeypatch, capsys):
+  out = _run_with(["add 2 3", "* 2", "history", "exit"], monkeypatch, capsys)
+  assert "multiply" in out

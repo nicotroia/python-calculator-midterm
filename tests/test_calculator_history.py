@@ -46,7 +46,6 @@ def test_display_shows_operation():
   assert "add" in out
   assert "3" in out
 
-
 # --- load_from_csv ---
 
 _VALID_CSV = textwrap.dedent("""\
@@ -67,12 +66,10 @@ def test_load_from_csv_valid(tmp_path):
   assert events[0].result == 3.0
   assert events[1].operation == "multiply"
 
-
 def test_load_from_csv_file_not_found(tmp_path):
   h = CalculatorHistory()
   events = h.load_from_csv(tmp_path / "does_not_exist.csv")
   assert events == []
-
 
 def test_load_from_csv_missing_columns(tmp_path):
   csv_file = tmp_path / "bad.csv"
@@ -80,7 +77,6 @@ def test_load_from_csv_missing_columns(tmp_path):
   h = CalculatorHistory()
   events = h.load_from_csv(csv_file)
   assert events == []
-
 
 def test_load_from_csv_malformed_row_skipped(tmp_path):
   csv_file = tmp_path / "partial.csv"
@@ -104,7 +100,6 @@ def test_load_from_csv_empty_file(tmp_path):
   h = CalculatorHistory()
   events = h.load_from_csv(csv_file)
   assert events == []
-
 
 # --- save_to_csv ---
 
@@ -144,7 +139,6 @@ def test_save_to_csv_creates_folder(tmp_path):
   h.update(_ev())
   h.save_to_csv(config)
   assert nested.exists()
-
 
 # --- load_from_csv: unreadable file ---
 

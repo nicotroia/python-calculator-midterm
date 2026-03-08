@@ -3,7 +3,10 @@ from decimal import Decimal
 import pytest
 from app.calculator_config import CalculatorConfig
 from app.exceptions import ValidationError
-from app.input_validators import InputValidator, parse_expression, parse_word_command
+from app.input_validators import (
+  InputValidator, parse_expression, parse_word_command,
+  parse_chain_expression, is_chain_expression,
+)
 
 # ── valid expressions
 
@@ -89,3 +92,63 @@ def test_parse_word_command_bad_format():
 def test_parse_word_command_invalid_number():
   with pytest.raises(ValidationError):
     parse_word_command("add abc 3")
+
+# ── is_chain_expression
+
+@pytest.mark.parametrize("text", [
+  "* 2",
+  "+ 5",
+  "- 1",
+  "/ 4",
+  "% 3",
+  "** 2",
+  "// 3",
+  "  * 2  ",
+])
+def test_is_chain_expression_true(text):
+  assert is_chain_expression(text) is True
+
+@pytest.mark.parametrize("text", [
+  "1 + 2",
+  "add 1 2",
+  "* abc",
+  "",
+  "3",
+])
+def test_is_chain_expression_false(text):
+  assert is_chain_expression(text) is False
+
+# ── parse_chain_expression
+
+@pytest.mark.parametrize("text,last,expected_a,expected_op,expected_b", [
+  ("* 2",   6,   6,    "multiply",        2),
+  ("+ 10",  5,   5,    "add",             10),
+  ("- 3",   15,  15,   "subtract",        3),
+  ("/ 4",   20,  20,   "divide",          4),
+  ("% 3",   10,  10,   "modulus",         3),
+  ("** 3",  2,   2,    "power",           3),
+  ("// 3",  10,  10,   "integer_division", 3),
+])
+def test_parse_chain_expression_valid(text, last, expected_a, expected_op, expected_b):
+  a, op, b = parse_chain_expression(text, last)
+  assert a == Decimal(str(expected_a))
+  assert op == expected_op
+  assert b == Decimal(str(expected_b))
+
+def test_parse_chain_expression_no_previous_result():
+  with pytest.raises(ValidationError, match="No previous result"):
+    parse_chain_expression("* 2", None)
+
+def test_parse_chain_expression_bad_format():
+  with pytest.raises(ValidationError):
+    parse_chain_expression("bad input", 5)
+
+def test_parse_chain_expression_invalid_number():
+  with pytest.raises(ValidationError):
+    parse_chain_expression("* abc", 5)
+
+def test_parse_chain_expression_uses_config_max():
+  config = CalculatorConfig()
+  config.max_input_value = Decimal("1")
+  with pytest.raises(ValidationError, match="exceeds maximum"):
+    parse_chain_expression("* 2", 100, config)
