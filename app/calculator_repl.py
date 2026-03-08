@@ -1,7 +1,7 @@
 """Interactive REPL for the calculator."""
 from app.calculator_config import CalculatorConfig
-from app.calculator_history import CalculatorHistory
 from app.calculator_logs import CalculatorLogger
+from app.calculator_memento import HistoryManager
 from app.exceptions import CalculatorError, ValidationError
 from app.input_validators import (
   parse_expression, parse_word_command, OPERATOR_SYMBOLS, WORD_COMMANDS,
@@ -14,6 +14,8 @@ COMMANDS = {
   "help":    "Show this help message",
   "history": "Display calculation history",
   "clear":   "Clear calculation history",
+  "undo":    "Undo the last calculation",
+  "redo":    "Re-apply the last undone calculation",
   "exit":    "Quit the calculator",
 }
 
@@ -21,7 +23,6 @@ _OP_HELP = " | ".join(
   f"'{sym}' ({name})" for sym, name in OPERATOR_SYMBOLS.items()
 )
 _WORD_HELP = ", ".join(sorted(WORD_COMMANDS))
-
 
 def _print_help():
   print("\n== Calculator Help ==")
@@ -34,23 +35,22 @@ def _print_help():
     print(f"  {name:<16} {description}")
   print()
 
-
-class _ReplRunner(Observable):
-  """Runs the REPL loop and notifies observers of each calculation."""
+class ReplLoop(Observable):
+  """Runs the REPL loop and notifies observers of each calculation"""
 
   def __init__(self, config: CalculatorConfig):
     super().__init__()
     self._config = config
 
   def _evaluate(self, raw: str):
-    """Try word-command first, fall back to infix expression."""
+    """Try word-command first, fall back to infix expression"""
     try:
       return parse_word_command(raw, self._config)
     except ValidationError:
       pass
     return parse_expression(raw, self._config)
 
-  def run(self, history: CalculatorHistory):
+  def run(self, history: HistoryManager):
     print("REPL Calculator — type 'help' for commands or 'exit' to quit.")
     while True:
       try:
@@ -76,6 +76,18 @@ class _ReplRunner(Observable):
         history.clear()
         print("History cleared.")
         continue
+      if lowered == "undo":
+        if history.undo():
+          print("Undone.")
+        else:
+          print("Nothing to undo.")
+        continue
+      if lowered == "redo":
+        if history.redo():
+          print("Redone.")
+        else:
+          print("Nothing to redo.")
+        continue
 
       try:
         a, op_name, b = self._evaluate(raw)
@@ -85,14 +97,13 @@ class _ReplRunner(Observable):
       except CalculatorError as exc:
         print(f"Error: {exc}")
 
-
 def run():
-  """Entry point: wire observers and start the REPL."""
+  """Wire up each observer and start the REPL"""
   config = CalculatorConfig()
-  history = CalculatorHistory()
+  history = HistoryManager()
   logger = CalculatorLogger()
 
-  runner = _ReplRunner(config)
+  runner = ReplLoop(config)
   runner.add_observer(history)
   runner.add_observer(logger)
   runner.run(history)

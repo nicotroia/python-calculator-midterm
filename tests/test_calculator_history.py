@@ -2,6 +2,8 @@
 import textwrap
 from decimal import Decimal
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import pytest
 
@@ -101,4 +103,55 @@ def test_load_from_csv_empty_file(tmp_path):
   csv_file.write_text("operation,operands,result,timestamp\n")
   h = CalculatorHistory()
   events = h.load_from_csv(csv_file)
+  assert events == []
+
+
+# --- save_to_csv ---
+
+def test_save_to_csv_creates_file(tmp_path):
+  config = SimpleNamespace(history_folder=str(tmp_path))
+  h = CalculatorHistory()
+  h.update(_ev("add", 1, 2, 3))
+  h.save_to_csv(config)
+  csv_files = list(tmp_path.glob("*.log"))
+  assert len(csv_files) == 1
+
+def test_save_to_csv_content(tmp_path):
+  config = SimpleNamespace(history_folder=str(tmp_path))
+  h = CalculatorHistory()
+  h.update(_ev("multiply", 3, 4, 12))
+  h.save_to_csv(config)
+  content = next(tmp_path.glob("*.log")).read_text()
+  assert "multiply" in content
+  assert "3, 4" in content
+  assert "12" in content
+
+def test_save_to_csv_empty_history(tmp_path):
+  config = SimpleNamespace(history_folder=str(tmp_path))
+  h = CalculatorHistory()
+  h.save_to_csv(config)
+  csv_files = list(tmp_path.glob("*.log"))
+  assert len(csv_files) == 1
+  content = csv_files[0].read_text()
+  # Only the header row, no data rows
+  lines = [l for l in content.splitlines() if l.strip()]
+  assert len(lines) == 1
+
+def test_save_to_csv_creates_folder(tmp_path):
+  nested = tmp_path / "a" / "b"
+  config = SimpleNamespace(history_folder=str(nested))
+  h = CalculatorHistory()
+  h.update(_ev())
+  h.save_to_csv(config)
+  assert nested.exists()
+
+
+# --- load_from_csv: unreadable file ---
+
+def test_load_from_csv_unreadable(tmp_path):
+  csv_file = tmp_path / "unreadable.csv"
+  csv_file.write_text("anything")
+  with patch("app.calculator_history.pd.read_csv", side_effect=OSError("disk error")):
+    h = CalculatorHistory()
+    events = h.load_from_csv(csv_file)
   assert events == []

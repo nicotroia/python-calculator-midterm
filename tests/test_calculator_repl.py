@@ -140,3 +140,30 @@ def test_clear_empties_history(monkeypatch, capsys):
   out = _run_with(["add 2 3", "clear", "history", "exit"], monkeypatch, capsys)
   assert "cleared" in out
   assert "No history" in out
+
+
+# ── undo / redo
+
+def test_undo_command_in_commands():
+  assert "undo" in COMMANDS
+
+def test_redo_command_in_commands():
+  assert "redo" in COMMANDS
+
+def test_undo_with_nothing_to_undo(monkeypatch, capsys):
+  out = _run_with(["undo", "exit"], monkeypatch, capsys)
+  assert "Nothing to undo" in out
+
+def test_redo_with_nothing_to_redo(monkeypatch, capsys):
+  out = _run_with(["redo", "exit"], monkeypatch, capsys)
+  assert "Nothing to redo" in out
+
+def test_undo_after_calculation(monkeypatch, capsys):
+  out = _run_with(["add 1 2", "undo", "history", "exit"], monkeypatch, capsys)
+  assert "Undone" in out
+  assert "No history" in out
+
+def test_redo_after_undo(monkeypatch, capsys):
+  out = _run_with(["add 1 2", "undo", "redo", "history", "exit"], monkeypatch, capsys)
+  assert "Redone" in out
+  assert "add" in out
