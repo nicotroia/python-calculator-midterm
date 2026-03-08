@@ -22,14 +22,15 @@ COMMANDS = {
   "exit":    "Quit the calculator",
 }
 
-_OP_HELP = " | ".join(
-  f"'{sym}' ({name})" for sym, name in OPERATOR_SYMBOLS.items()
-)
-_WORD_HELP = ", ".join(sorted(WORD_COMMANDS))
+# Maps operation name → first matching word alias (e.g. "absolute_difference" → "abs_diff")
+_OP_TO_WORD: dict[str, str] = {}
+for _word, _op in WORD_COMMANDS.items():
+  if _op not in _OP_TO_WORD:
+    _OP_TO_WORD[_op] = _word
 
 def _print_gradient(text: str) -> None:
-  """Print text with a rainbow gradient using 256-color ANSI codes"""
-  colors = [255, 253, 195, 189, 153, 117, 111, 105, 99, 63, 57, 93, 129, 135, 141, 147, 183]
+  """Print text with a colored gradient using 256-color ANSI codes"""
+  colors = [99, 105, 111, 117, 123, 129, 153, 189, 195, 255, 253, 195, 183, 147, 141, 135, 129, 111]
   reset = "\033[0m"
   gradient = ""
   for i, ch in enumerate(text):
@@ -38,14 +39,21 @@ def _print_gradient(text: str) -> None:
   print(gradient + reset)
 
 def _print_help():
-  print("\n== Calculator Help ==")
-  print("Infix:  <number> <operator> <number>")
-  print(f"  Operators: {_OP_HELP}")
-  print("Word:   <operation> <number> <number>")
-  print(f"  Operations: {_WORD_HELP}")
-  print("\nCommands:")
+  T = Fore.LIGHTCYAN_EX   # title color
+  S = Fore.LIGHTBLACK_EX  # subtle color
+  R = Style.RESET_ALL
+  print(f"\n{T}== Calculator Help =={R}")
+  print(f"\n{T}Infix:{R:<11}  <number> <operator> <number>")
+  print(f"{S}Example:{R:<10} (1 + 2)")
+  print(f"\n{T}Word:{R:<11}   <operation> <number> <number>")
+  print(f"{S}Example:{R:<10} (add 1 2)")
+  print(f"\n{T}Operators:{R}")
+  for sym, name in OPERATOR_SYMBOLS.items():
+    alias = _OP_TO_WORD.get(name, name)
+    print(f"  {T}{sym:<12}{R} {alias}")
+  print(f"\n{T}Commands:{R}")
   for name, description in COMMANDS.items():
-    print(f"  {name:<16} {description}")
+    print(f"  {T}{name:<12}{R} {description}")
   print()
 
 class ReplLoop(Observable):
@@ -73,7 +81,7 @@ class ReplLoop(Observable):
         raw = input("> ").strip()
       except (KeyboardInterrupt, EOFError):
         print()
-        _print_gradient("Goodbye :)")
+        print(Fore.LIGHTCYAN_EX + "Goodbye " + Style.RESET_ALL + Fore.LIGHTBLACK_EX + ":)" + Style.RESET_ALL)
         break
 
       if not raw:
@@ -81,7 +89,7 @@ class ReplLoop(Observable):
 
       lowered = raw.lower()
       if lowered == "exit":
-        _print_gradient("Goodbye :)")
+        print(Fore.LIGHTCYAN_EX + "Goodbye " + Style.RESET_ALL + Fore.LIGHTBLACK_EX + ":)" + Style.RESET_ALL)
         break
       if lowered == "help":
         _print_help()

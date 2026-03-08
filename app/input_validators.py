@@ -35,11 +35,13 @@ class InputValidator:
     except InvalidOperation as exc:
       raise ValidationError(f"Invalid number format: {value}") from exc
 
-# Ordered so multi-char operators (**  //) are matched before single-char ones
+# Ordered so multi-char operators (**  //  %%  <>) are matched before single-char ones
 # Keep this order: multi-char before single-char so regex alternation works
 OPERATOR_SYMBOLS = {
   "**": "power",
   "//": "integer_division",
+  "%%": "percentage",
+  "<>": "absolute_difference",
   "+":  "add",
   "-":  "subtract",
   "*":  "multiply",
@@ -50,12 +52,12 @@ OPERATOR_SYMBOLS = {
 
 # Matches optional-negative number
 _EXPR_RE = re.compile(
-  r'^\s*(-?[\d.]+)\s*(\*\*|//|[+\-*/%^])\s*(-?[\d.]+)\s*$'
+  r'^\s*(-?[\d.]+)\s*(\*\*|//|%%|<>|[+\-*/%^])\s*(-?[\d.]+)\s*$'
 )
 
 # Matches a chain expression when there is no leading operand
 _CHAIN_RE = re.compile(
-  r'^\s*(\*\*|//|[+\-*/%^])\s*(-?[\d.]+)\s*$'
+  r'^\s*(\*\*|//|%%|<>|[+\-*/%^])\s*(-?[\d.]+)\s*$'
 )
 
 # Maps REPL word commands → OperationFactory names

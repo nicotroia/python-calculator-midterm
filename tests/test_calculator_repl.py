@@ -79,6 +79,27 @@ def test_invalid_expression_shows_error(monkeypatch, capsys):
 def test_divide_by_zero_shows_error(monkeypatch, capsys):
   out = _run_with(["5/0", "exit"], monkeypatch, capsys)
   assert "Error" in out
+  
+def test_infix_percentage(monkeypatch, capsys):
+  # 50 %% 200 → (50/200)*100 = 25
+  out = _run_with(["50 %% 200", "exit"], monkeypatch, capsys)
+  assert "25" in out
+
+def test_infix_absolute_difference(monkeypatch, capsys):
+  # 3 <> 10 → abs(3-10) = 7
+  out = _run_with(["3 <> 10", "exit"], monkeypatch, capsys)
+  assert "7" in out
+
+def test_chain_percentage(monkeypatch, capsys):
+  # 10+40=50, then %% 200 → 25
+  out = _run_with(["10+40", "%% 200", "exit"], monkeypatch, capsys)
+  assert "25" in out
+
+def test_chain_absolute_difference(monkeypatch, capsys):
+  # 3, then <> 10 → 7
+  out = _run_with(["1+2", "<> 10", "exit"], monkeypatch, capsys)
+  assert "7" in out
+
 
 # ── word-style commands
 
@@ -86,21 +107,17 @@ def test_word_add(monkeypatch, capsys):
   out = _run_with(["add 5 3", "exit"], monkeypatch, capsys)
   assert "8" in out
 
-
 def test_word_subtract(monkeypatch, capsys):
   out = _run_with(["subtract 10 4", "exit"], monkeypatch, capsys)
   assert "6" in out
-
 
 def test_word_multiply(monkeypatch, capsys):
   out = _run_with(["multiply 6 7", "exit"], monkeypatch, capsys)
   assert "42" in out
 
-
 def test_word_divide(monkeypatch, capsys):
   out = _run_with(["divide 10 4", "exit"], monkeypatch, capsys)
   assert "2.5" in out
-
 
 def test_word_power(monkeypatch, capsys):
   out = _run_with(["power 2 8", "exit"], monkeypatch, capsys)
@@ -192,3 +209,4 @@ def test_chain_after_clear_errors(monkeypatch, capsys):
 def test_chain_updates_history(monkeypatch, capsys):
   out = _run_with(["add 2 3", "* 2", "history", "exit"], monkeypatch, capsys)
   assert "multiply" in out
+

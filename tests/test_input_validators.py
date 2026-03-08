@@ -11,17 +11,19 @@ from app.input_validators import (
 # ── valid expressions
 
 @pytest.mark.parametrize("expr,expected", [
-  ("1+2",        (1.0, "add",              2.0)),
-  ("8 * 2",      (8.0, "multiply",         2.0)),
-  ("10 - 3",     (10.0, "subtract",        3.0)),
-  ("9/3",        (9.0, "divide",           3.0)),
-  ("2**8",       (2.0, "power",            8.0)),
-  ("4^2",        (4.0, "power",            2.0)),
-  ("10 // 3",    (10.0, "integer_division",3.0)),
-  ("10 % 3",     (10.0, "modulus",         3.0)),
-  ("-5 + 3",     (-5.0, "add",             3.0)),
-  ("5 + -3",     (5.0, "add",             -3.0)),
-  ("2.5 * 4",    (2.5, "multiply",         4.0)),
+  ("1+2",        (1.0, "add",                2.0)),
+  ("8 * 2",      (8.0, "multiply",           2.0)),
+  ("10 - 3",     (10.0, "subtract",          3.0)),
+  ("9/3",        (9.0, "divide",             3.0)),
+  ("2**8",       (2.0, "power",              8.0)),
+  ("4^2",        (4.0, "power",              2.0)),
+  ("10 // 3",    (10.0, "integer_division",  3.0)),
+  ("10 % 3",     (10.0, "modulus",           3.0)),
+  ("-5 + 3",     (-5.0, "add",              3.0)),
+  ("5 + -3",     (5.0, "add",              -3.0)),
+  ("2.5 * 4",    (2.5, "multiply",           4.0)),
+  ("50 %% 200",  (50.0, "percentage",      200.0)),
+  ("3 <> 10",    (3.0, "absolute_difference", 10.0)),
 ])
 def test_parse_valid(expr, expected):
   assert parse_expression(expr) == expected
@@ -103,6 +105,8 @@ def test_parse_word_command_invalid_number():
   "% 3",
   "** 2",
   "// 3",
+  "%% 200",
+  "<> 5",
   "  * 2  ",
 ])
 def test_is_chain_expression_true(text):
