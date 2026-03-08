@@ -1,4 +1,4 @@
-"""Interactive REPL for the calculator."""
+"""Interactive REPL calculator"""
 import readline  # enables up/down arrow history in input()
 from app.calculator_config import CalculatorConfig
 from app.calculator_logs import CalculatorLogger
@@ -108,7 +108,7 @@ def run():
   """Wire up each observer and start the REPL"""
   config = CalculatorConfig()
   history = HistoryManager()
-  logger = CalculatorLogger()
+  logger = CalculatorLogger(config)
 
   runner = ReplLoop(config)
   runner.add_observer(history)

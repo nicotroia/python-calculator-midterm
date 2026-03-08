@@ -104,7 +104,7 @@ def test_load_from_csv_empty_file(tmp_path):
 # --- save_to_csv ---
 
 def test_save_to_csv_creates_file(tmp_path):
-  config = SimpleNamespace(history_folder=str(tmp_path))
+  config = SimpleNamespace(history_dir=str(tmp_path))
   h = CalculatorHistory()
   h.update(_ev("add", 1, 2, 3))
   h.save_to_csv(config)
@@ -112,7 +112,7 @@ def test_save_to_csv_creates_file(tmp_path):
   assert len(csv_files) == 1
 
 def test_save_to_csv_content(tmp_path):
-  config = SimpleNamespace(history_folder=str(tmp_path))
+  config = SimpleNamespace(history_dir=str(tmp_path))
   h = CalculatorHistory()
   h.update(_ev("multiply", 3, 4, 12))
   h.save_to_csv(config)
@@ -122,7 +122,7 @@ def test_save_to_csv_content(tmp_path):
   assert "12" in content
 
 def test_save_to_csv_empty_history(tmp_path):
-  config = SimpleNamespace(history_folder=str(tmp_path))
+  config = SimpleNamespace(history_dir=str(tmp_path))
   h = CalculatorHistory()
   h.save_to_csv(config)
   csv_files = list(tmp_path.glob("*.log"))
@@ -134,7 +134,7 @@ def test_save_to_csv_empty_history(tmp_path):
 
 def test_save_to_csv_creates_folder(tmp_path):
   nested = tmp_path / "a" / "b"
-  config = SimpleNamespace(history_folder=str(nested))
+  config = SimpleNamespace(history_dir=str(nested))
   h = CalculatorHistory()
   h.update(_ev())
   h.save_to_csv(config)

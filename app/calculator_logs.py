@@ -4,28 +4,26 @@ from pathlib import Path
 
 import pandas as pd
 
+from app.calculator_config import CalculatorConfig
 from app.observer import Observer, CalculationEvent
 
-_LOG_DIR = Path(__file__).parent.parent / "logs"
-
-def _log_path() -> Path:
-  """Return today's log file path, e.g. logs/2026-03-03.log"""
-  return _LOG_DIR / f"{date.today()}.log"
 
 class CalculatorLogger(Observer):
   """Appends each calculation to a date-stamped CSV log file via pandas
 
   The log directory is created automatically if it doesn't exist
   """
-  # Column order for the CSV
   _COLUMNS = ["timestamp", "operation", "a", "b", "result"]
 
-  def __init__(self):
-    _LOG_DIR.mkdir(exist_ok=True)
-    self._path = _log_path()
-    # Load existing records for today if the file already exists
+  def __init__(self, config: CalculatorConfig = None):
+    if config is None:
+      config = CalculatorConfig()
+    log_dir = Path(config.log_dir)
+    log_dir.mkdir(parents=True, exist_ok=True)
+    self._path = log_dir / f"{date.today()}.log"
+    self._encoding = config.default_encoding
     if self._path.exists():
-      self._df = pd.read_csv(self._path)
+      self._df = pd.read_csv(self._path, encoding=self._encoding)
     else:
       self._df = pd.DataFrame(columns=self._COLUMNS)
 
@@ -38,4 +36,4 @@ class CalculatorLogger(Observer):
       "result": event.result,
     }])
     self._df = pd.concat([self._df, new_row], ignore_index=True)
-    self._df.to_csv(self._path, index=False)
+    self._df.to_csv(self._path, index=False, encoding=self._encoding)
