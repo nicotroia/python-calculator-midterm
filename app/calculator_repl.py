@@ -1,5 +1,6 @@
 """Interactive REPL calculator"""
 import readline  # enables up/down arrow history in input()
+from colorama import init as colorama_init, Fore, Style
 from app.calculator_config import CalculatorConfig
 from app.calculator_logs import CalculatorLogger
 from app.calculator_memento import HistoryManager
@@ -25,6 +26,16 @@ _OP_HELP = " | ".join(
   f"'{sym}' ({name})" for sym, name in OPERATOR_SYMBOLS.items()
 )
 _WORD_HELP = ", ".join(sorted(WORD_COMMANDS))
+
+def _print_gradient(text: str) -> None:
+  """Print text with a rainbow gradient using 256-color ANSI codes"""
+  colors = [255, 253, 195, 189, 153, 117, 111, 105, 99, 63, 57, 93, 129, 135, 141, 147, 183]
+  reset = "\033[0m"
+  gradient = ""
+  for i, ch in enumerate(text):
+    code = colors[i % len(colors)]
+    gradient += f"\033[38;5;{code}m{ch}"
+  print(gradient + reset)
 
 def _print_help():
   print("\n== Calculator Help ==")
@@ -54,12 +65,15 @@ class ReplLoop(Observable):
     return parse_expression(raw, self._config)
 
   def run(self, history: HistoryManager):
-    print("REPL Calculator — type 'help' for commands or 'exit' to quit.")
+    print("Welcome to ", end="")
+    _print_gradient("Nico's REPL Calculator")
+    print("Type 'help' for commands or 'exit' to quit.")
     while True:
       try:
         raw = input("> ").strip()
       except (KeyboardInterrupt, EOFError):
-        print("\nGoodbye.")
+        print()
+        _print_gradient("Goodbye :)")
         break
 
       if not raw:
@@ -67,7 +81,7 @@ class ReplLoop(Observable):
 
       lowered = raw.lower()
       if lowered == "exit":
-        print("Goodbye.")
+        _print_gradient("Goodbye :)")
         break
       if lowered == "help":
         _print_help()
@@ -100,12 +114,14 @@ class ReplLoop(Observable):
         result = OperationFactory.execute(op_name, a, b)
         self._last_result = result
         self.notify_observers(CalculationEvent(op_name, a, b, result))
-        print(result if result != int(result) else int(result))
+        display = result if result != int(result) else int(result)
+        print(Fore.GREEN + str(display) + Style.RESET_ALL)
       except CalculatorError as exc:
         print(f"Error: {exc}")
 
 def run():
   """Wire up each observer and start the REPL"""
+  colorama_init(autoreset=True)
   config = CalculatorConfig()
   history = HistoryManager()
   logger = CalculatorLogger(config)
