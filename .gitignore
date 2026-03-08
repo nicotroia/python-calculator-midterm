@@ -33,7 +33,6 @@ logs/
 history/
 *.log
 *.csv
-calculator_history.*
 
 # IDE - VSCode
 #.vscode/
