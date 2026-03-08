@@ -1,5 +1,10 @@
 """Tests for CalculatorHistory observer"""
+import textwrap
 from decimal import Decimal
+from pathlib import Path
+
+import pytest
+
 from app.calculator_history import CalculatorHistory
 from app.observer import CalculationEvent
 
@@ -38,3 +43,62 @@ def test_display_shows_operation():
   out = h.display()
   assert "add" in out
   assert "3" in out
+
+
+# --- load_from_csv ---
+
+_VALID_CSV = textwrap.dedent("""\
+  operation,operands,result,timestamp
+  add,"1, 2",3,2026-03-07T10:00:00
+  multiply,"3, 4",12,2026-03-07T10:01:00
+""")
+
+def test_load_from_csv_valid(tmp_path):
+  csv_file = tmp_path / "history.csv"
+  csv_file.write_text(_VALID_CSV)
+  h = CalculatorHistory()
+  events = h.load_from_csv(csv_file)
+  assert len(events) == 2
+  assert events[0].operation == "add"
+  assert events[0].a == Decimal("1")
+  assert events[0].b == Decimal("2")
+  assert events[0].result == 3.0
+  assert events[1].operation == "multiply"
+
+
+def test_load_from_csv_file_not_found(tmp_path):
+  h = CalculatorHistory()
+  events = h.load_from_csv(tmp_path / "does_not_exist.csv")
+  assert events == []
+
+
+def test_load_from_csv_missing_columns(tmp_path):
+  csv_file = tmp_path / "bad.csv"
+  csv_file.write_text("op,nums\nadd,\"1,2\"\n")
+  h = CalculatorHistory()
+  events = h.load_from_csv(csv_file)
+  assert events == []
+
+
+def test_load_from_csv_malformed_row_skipped(tmp_path):
+  csv_file = tmp_path / "partial.csv"
+  csv_file.write_text(textwrap.dedent("""\
+    operation,operands,result,timestamp
+    add,"1, 2",3,2026-03-07T10:00:00
+    subtract,INVALID,not_a_number,bad-ts
+    multiply,"3, 4",12,2026-03-07T10:01:00
+  """))
+  h = CalculatorHistory()
+  events = h.load_from_csv(csv_file)
+  # Only the two valid rows should come back
+  assert len(events) == 2
+  assert events[0].operation == "add"
+  assert events[1].operation == "multiply"
+
+
+def test_load_from_csv_empty_file(tmp_path):
+  csv_file = tmp_path / "empty.csv"
+  csv_file.write_text("operation,operands,result,timestamp\n")
+  h = CalculatorHistory()
+  events = h.load_from_csv(csv_file)
+  assert events == []

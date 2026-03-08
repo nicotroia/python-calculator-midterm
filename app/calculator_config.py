@@ -17,3 +17,6 @@ class CalculatorConfig:
   max_input_value: Decimal = field(
     default_factory=lambda: Decimal(os.getenv("MAX_INPUT_VALUE", "1e10"))
   )
+  history_folder: str = field(
+    default_factory=lambda: os.getenv("CALCULATOR_HISTORY_FOLDER", "logs")
+  )
