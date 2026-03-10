@@ -1,6 +1,10 @@
 """Interactive REPL calculator"""
 import readline  # enables up/down arrow history in input()
 from colorama import init as colorama_init, Fore, Style
+from app.calculator_commands import (
+  CommandInvoker, HelpCommand, HistoryCommand, ClearCommand,
+  UndoCommand, RedoCommand, ExitCommand,
+)
 from app.calculator_config import CalculatorConfig
 from app.calculator_logs import CalculatorLogger
 from app.calculator_memento import HistoryManager
@@ -73,6 +77,17 @@ class ReplLoop(Observable):
     return parse_expression(raw, self._config)
 
   def run(self, history: HistoryManager):
+    def _goodbye():
+      print(Fore.LIGHTCYAN_EX + "Goodbye " + Style.RESET_ALL + Fore.LIGHTBLACK_EX + ":)" + Style.RESET_ALL)
+
+    invoker = CommandInvoker()
+    invoker.register("help",    HelpCommand(_print_help))
+    invoker.register("history", HistoryCommand(history))
+    invoker.register("clear",   ClearCommand(history))
+    invoker.register("undo",    UndoCommand(history))
+    invoker.register("redo",    RedoCommand(history))
+    invoker.register("exit",    ExitCommand(_goodbye))
+
     print("Welcome to ", end="")
     _print_gradient("Nico's REPL Calculator")
     print("Type 'help' for commands or 'exit' to quit.")
@@ -88,30 +103,10 @@ class ReplLoop(Observable):
         continue
 
       lowered = raw.lower()
-      if lowered == "exit":
-        print(Fore.LIGHTCYAN_EX + "Goodbye " + Style.RESET_ALL + Fore.LIGHTBLACK_EX + ":)" + Style.RESET_ALL)
-        break
-      if lowered == "help":
-        _print_help()
-        continue
-      if lowered == "history":
-        print(history.display())
-        continue
-      if lowered == "clear":
-        history.clear()
-        print("History cleared.")
-        continue
-      if lowered == "undo":
-        if history.undo():
-          print("Undone.")
-        else:
-          print("Nothing to undo.")
-        continue
-      if lowered == "redo":
-        if history.redo():
-          print("Redone.")
-        else:
-          print("Nothing to redo.")
+      cmd_result = invoker.run(lowered)
+      if cmd_result is not None:
+        if not cmd_result:
+          break
         continue
 
       try:
